@@ -13,6 +13,9 @@ namespace PokemonGo.RocketAPI.Logic
 {
     public class Logic
     {
+
+        public static float delayMulti = 0.6f;
+
         private readonly Client _client;
         private readonly ISettings _clientSettings;
         private readonly Inventory _inventory;
@@ -58,7 +61,7 @@ namespace PokemonGo.RocketAPI.Logic
                     Logger.Write($"Exception: {ex}", LogLevel.Error);
                 }
 
-                await Task.Delay(10000);
+                await Task.Delay((int)(10000*delayMulti));
             }
         }
 
@@ -82,7 +85,7 @@ namespace PokemonGo.RocketAPI.Logic
 
                 Logger.Write($"Farmed XP: {fortSearch.ExperienceAwarded}, Gems: { fortSearch.GemsAwarded}, Eggs: {fortSearch.PokemonDataEgg} Items: {StringUtils.GetSummedFriendlyNameOfItemAwardList(fortSearch.ItemsAwarded)}", LogLevel.Info);
 
-                await Task.Delay(15000);
+                await Task.Delay((int)(15000 * delayMulti));
                 await ExecuteCatchAllNearbyPokemons(client);
             }
         }
@@ -103,19 +106,19 @@ namespace PokemonGo.RocketAPI.Logic
                 CatchPokemonResponse caughtPokemonResponse;
                 do
                 {
-                    if (encounterPokemonResponse?.CaptureProbability.CaptureProbability_.First() < 0.4)
+                    if (encounterPokemonResponse.WildPokemon != null && (encounterPokemonResponse?.CaptureProbability.CaptureProbability_.First() < 0.3 && encounterPokemonResponse.WildPokemon.PokemonData.Cp>200))
                     {
                         //Throw berry is we can
                         await UseBerry(pokemon.EncounterId, pokemon.SpawnpointId);
                     }
 
                     caughtPokemonResponse = await client.CatchPokemon(pokemon.EncounterId, pokemon.SpawnpointId, pokemon.Latitude, pokemon.Longitude, pokeball);
-                    await Task.Delay(2000);
+                    await Task.Delay((int)(2000 * delayMulti));
                 }
                 while (caughtPokemonResponse.Status == CatchPokemonResponse.Types.CatchStatus.CatchMissed);
 
                 Logger.Write(caughtPokemonResponse.Status == CatchPokemonResponse.Types.CatchStatus.CatchSuccess ? $"We caught a {pokemon.PokemonId} with CP {encounterPokemonResponse?.WildPokemon?.PokemonData?.Cp} using a {pokeball}" : $"{pokemon.PokemonId} with CP {encounterPokemonResponse?.WildPokemon?.PokemonData?.Cp} got away while using a {pokeball}..", LogLevel.Info);
-                await Task.Delay(15000);
+                await Task.Delay((int)(15000 * delayMulti));
             }
         }
         
@@ -132,7 +135,7 @@ namespace PokemonGo.RocketAPI.Logic
                         Logger.Write($"Failed to evolve {pokemon.PokemonId}. EvolvePokemonOutProto.Result was {evolvePokemonOutProto.Result}, stopping evolving {pokemon.PokemonId}", LogLevel.Info);
                     
 
-                await Task.Delay(3000);
+                await Task.Delay((int)(3000 * delayMulti));
             }
         }
 
@@ -205,7 +208,7 @@ namespace PokemonGo.RocketAPI.Logic
             
             var useRaspberry = await _client.UseCaptureItem(encounterId, AllEnum.ItemId.ItemRazzBerry, spawnPointId);
             Logger.Write($"Use Rasperry. Remaining: {berry.Count}", LogLevel.Info);
-            await Task.Delay(3000);
+            await Task.Delay((int)(3000 * delayMulti));
         }
     }
 }
